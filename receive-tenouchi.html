@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>テノウチ 画面</title>
+    <style>
+        #output li {
+            background: #ccc;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- データ出力場所 -->
+    <ul id="output"></ul>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script>
+        //日時をいい感じの形式にする関数
+        function convertFromFirestoreTimestampToDatetime(timestamp) {
+            const _d = timestamp ? new Date(timestamp * 1000) : new Date();
+            const Y = _d.getFullYear();
+            const m = (_d.getMonth() + 1).toString().padStart(2, '0');
+            const d = _d.getDate().toString().padStart(2, '0');
+            const H = _d.getHours().toString().padStart(2, '0');
+            const i = _d.getMinutes().toString().padStart(2, '0');
+            const s = _d.getSeconds().toString().padStart(2, '0');
+            return `${Y}/${m}/${d} ${H}:${i}:${s}`;
+        }
+    </script>
+    <!-- 以下にfirebaseのコードを貼り付けよう -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.6/firebase-app.js";
+        // import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.6/firebase-analytics.js";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+        import {
+            getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot,
+        } from "https://www.gstatic.com/firebasejs/9.6.6/firebase-firestore.js";
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyDLKwzpk5h2_ni0VcCrqSuzlA9XS5kQVnw",
+            authDomain: "tenouchi-48a42.firebaseapp.com",
+            projectId: "tenouchi-48a42",
+            storageBucket: "tenouchi-48a42.appspot.com",
+            messagingSenderId: "660875936255",
+            appId: "1:660875936255:web:37f9d62e39d216478467ca",
+            measurementId: "G-ZMF2G4KSPJ"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        // const analytics = getAnalytics(app);
+        const db = getFirestore(app);
+
+        $('#send').on('click', function () {
+            alert('OK')
+
+            addDoc(collection(db, 'tenouchi'), {
+                name: $('#name').val(),
+                mail: $('#mail').val(),
+                text: $('#text').val(),
+                time: serverTimestamp(),
+            });
+            $('#name').val('');
+            $('#mail').val('');
+            $('#text').val('');
+        });
+
+        const q = query(collection(db, 'tenouchi'), orderBy('time', 'desc'));
+        // ↓onSnapshotでcloud firestoreのデータ変更時に実行される！
+        onSnapshot(q, (querySnapshot) => {
+            // querySnapshot.docsにcloud firestoreのデータが配列形式で入る
+            const dataArray = []; // 必要なデータだけが入った新しい配列を作成
+            querySnapshot.docs.forEach(function (doc) {
+                const data = {
+                    id: doc.id,
+                    data: doc.data(),
+                }
+                dataArray.push(data);
+                console.log(dataArray);
+            });
+            const tagArray = []; // `dataArray`は前回出てきたオブジェクトの配列
+            dataArray.forEach(function (data) {
+                const datetime = convertFromFirestoreTimestampToDatetime(data.data.time.seconds);
+                tagArray.push(`
+        <li id=${data.id}>
+        <p>${data.data.name}</p>
+        <p>${data.data.mail}</p>
+        <p>${data.data.text}</p>
+        <p>${datetime}</p>
+        </li>
+        `)
+            })
+            $('#output').html(tagArray.join(''));
+        });
+    // const data = [{ ...}, { ...}, { ...}, ...];
+    // // 配列の各要素に対して下記の処理でデータが取れる．
+    // const id = { ...}.id;
+    // const data = { ...}.data();
+    // // 「必要なデータだけを入れた新しい配列」を作成
+    // const dataArray = [];
+    // dataArray.push({ id: id, data: data }); //
+    </script>
+</body>
+
+</html>
+
+<!-- <script type="module">
+        // // Import the functions you need from the SDKs you need
+        // import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js";
+        // // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+        // import {
+        // getFirestore, collection, addDoc, serverTimestamp, query,
+        orderBy, onSnapshot,
+            // } from "https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore.js";
+            // // Your web app's Firebase configuration
+            // const firebaseConfig = {
+            //     apiKey: "AIzaSyDou6IlafCzIoOjwUns3PibDUIkDfvQ6ro",
+            //     authDomain: "chatapp03-e3dcc.firebaseapp.com",
+            //     projectId: "chatapp03-e3dcc",
+            //     storageBucket: "chatapp03-e3dcc.appspot.com",
+            //     messagingSenderId: "674778347716",
+            //     appId: "1:674778347716:web:18439cf1252a422c4bf191"
+            // };
+
+            // // Initialize Firebase
+            //     const app = initializeApp(firebaseConfig);
+            // // //追記
+            // const db = getFirestore(app); -->
